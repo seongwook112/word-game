@@ -58,10 +58,16 @@
   .submit-btn:hover { background: #1e66e0; }
   .submit-btn:disabled { background: #cdd6e2; cursor: default; }
 
-  .hint-btn {
+  .hint-btn, .giveup-btn {
     margin: 14px auto 0; display: block;
     background: none; border: none; color: #9aa4b2; font-size: 14px; font-weight: 700;
     font-family: inherit; cursor: pointer; text-decoration: underline;
+  }
+  .giveup-btn { color: #ef4444; display: none; }
+  .answer-input.shake { animation: shake .3s; border-color: #ef4444; }
+  @keyframes shake {
+    25% { transform: translateX(-6px); } 50% { transform: translateX(6px); }
+    75% { transform: translateX(-4px); }
   }
   .hint-box { text-align: center; margin-top: 12px; font-size: 17px; font-weight: 800; color: #c47b1d; letter-spacing: 4px; }
 
@@ -285,6 +291,7 @@ function renderQuestion() {
       <button class="submit-btn" id="submitBtn" type="submit">제출</button>
     </form>
     <button class="hint-btn" id="hintBtn" onclick="showHint()">초성 힌트 보기</button>
+    <button class="giveup-btn" id="giveupBtn" onclick="giveUp()">모르겠어요, 정답 공개 🏳️</button>
     <div class="hint-box" id="hintBox"></div>
     <div class="verdict" id="verdict"></div>
     <div class="explain" id="explain"></div>
@@ -310,18 +317,39 @@ function submitAnswer(e) {
   const guess = normalize(input.value);
   if (!guess) return;
 
-  input.disabled = true;
+  const correct = q.answers.some(a => normalize(a) === guess);
+  if (!correct) {
+    const verdict = document.getElementById("verdict");
+    verdict.className = "verdict no";
+    verdict.textContent = "❌ 오답! 다시 시도해보세요";
+    verdict.style.display = "block";
+    document.getElementById("giveupBtn").style.display = "block";
+    input.value = "";
+    input.classList.remove("shake");
+    requestAnimationFrame(() => input.classList.add("shake"));
+    input.focus();
+    return;
+  }
+
+  state.score++; state.genScore[q.gen]++;
+  finishQuestion("⭕ 정답!", "ok");
+}
+
+function giveUp() {
+  const q = QUESTIONS[state.idx];
+  finishQuestion(`🏳️ 정답은 <span class="ans">${q.answers[0]}</span>`, "no");
+}
+
+function finishQuestion(verdictHtml, cls) {
+  const q = QUESTIONS[state.idx];
+  document.getElementById("answerInput").disabled = true;
   document.getElementById("submitBtn").disabled = true;
   document.getElementById("hintBtn").style.display = "none";
-
-  const correct = q.answers.some(a => normalize(a) === guess);
-  if (correct) { state.score++; state.genScore[q.gen]++; }
+  document.getElementById("giveupBtn").style.display = "none";
 
   const verdict = document.getElementById("verdict");
-  verdict.className = `verdict ${correct ? "ok" : "no"}`;
-  verdict.innerHTML = correct
-    ? "⭕ 정답!"
-    : `❌ 아쉽! 정답은 <span class="ans">${q.answers[0]}</span>`;
+  verdict.className = `verdict ${cls}`;
+  verdict.innerHTML = verdictHtml;
   verdict.style.display = "block";
 
   const ex = document.getElementById("explain");
