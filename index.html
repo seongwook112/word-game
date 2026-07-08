@@ -42,38 +42,21 @@
   .qnum { text-align: center; color: #2f7cf6; font-size: 34px; font-weight: 800; margin-bottom: 18px; }
   .qtext { text-align: center; font-size: 20px; font-weight: 700; line-height: 1.55; margin-bottom: 30px; white-space: pre-line; }
 
-  .answer-form { display: flex; gap: 10px; }
-  .answer-input {
-    flex: 1; padding: 18px 20px; border: 2px solid #d8e0ea; border-radius: 999px;
-    font-size: 17px; font-weight: 700; font-family: inherit; outline: none;
-    background: #fff; min-width: 0;
-  }
-  .answer-input:focus { border-color: #2f7cf6; }
-  .answer-input:disabled { background: #f0f3f8; color: #7a8494; }
-  .submit-btn {
-    padding: 18px 28px; border: none; border-radius: 999px;
+  .reveal-btn {
+    display: block; width: 100%; padding: 18px; border: none; border-radius: 999px;
     background: #2f7cf6; color: #fff; font-size: 17px; font-weight: 800; font-family: inherit;
-    cursor: pointer; white-space: nowrap;
+    cursor: pointer;
   }
-  .submit-btn:hover { background: #1e66e0; }
-  .submit-btn:disabled { background: #cdd6e2; cursor: default; }
+  .reveal-btn:hover { background: #1e66e0; }
 
-  .hint-btn, .giveup-btn {
+  .hint-btn {
     margin: 14px auto 0; display: block;
     background: none; border: none; color: #9aa4b2; font-size: 14px; font-weight: 700;
     font-family: inherit; cursor: pointer; text-decoration: underline;
   }
-  .giveup-btn { color: #ef4444; display: none; }
-  .answer-input.shake { animation: shake .3s; border-color: #ef4444; }
-  @keyframes shake {
-    25% { transform: translateX(-6px); } 50% { transform: translateX(6px); }
-    75% { transform: translateX(-4px); }
-  }
   .hint-box { text-align: center; margin-top: 12px; font-size: 17px; font-weight: 800; color: #c47b1d; letter-spacing: 4px; }
 
   .verdict { text-align: center; font-size: 26px; font-weight: 800; margin-top: 26px; display: none; }
-  .verdict.ok { color: #17b26a; }
-  .verdict.no { color: #ef4444; }
   .verdict .ans { color: #2f7cf6; }
 
   .explain {
@@ -99,17 +82,6 @@
     background: #2f7cf6; color: #fff; font-size: 18px; font-weight: 800; font-family: inherit; cursor: pointer;
   }
   .primary-btn:hover { background: #1e66e0; }
-
-  .score-big { font-size: 56px; font-weight: 800; color: #2f7cf6; margin: 10px 0 6px; }
-  .grade { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
-  .gen-breakdown {
-    margin: 30px auto 40px; max-width: 380px; text-align: left;
-    background: #fff; border-radius: 14px; padding: 20px 24px;
-    box-shadow: 0 4px 20px rgba(30,60,120,.08);
-  }
-  .gen-breakdown .row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 16px; }
-  .gen-breakdown .row b { color: #2f7cf6; }
-  .gen-breakdown .hint { font-size: 13px; color: #9aa4b2; padding-top: 10px; border-top: 1px solid #eef1f6; margin-top: 8px; line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -243,11 +215,9 @@ const QUESTIONS = [
   },
 ];
 
-const state = { idx: -1, score: 0, genScore: [0, 0] };
+const state = { idx: -1 };
 
 const app = document.getElementById("app");
-
-const normalize = s => s.toLowerCase().replace(/[\s.,!?~\-'"’·]/g, "");
 
 const CHO = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
 function choseongHint(word) {
@@ -263,13 +233,13 @@ function renderStart() {
     <div class="center-screen">
       <div class="big-emoji">🧓🤝🧑</div>
       <h1>세대공감 신조어 퀴즈</h1>
-      <div class="sub">1980년대 유행어부터 2026년 최신 밈까지,\n추억의 신조어 10문제 + 요즘 신조어 10문제!\n\n주관식입니다. 옛날 사람 🤝 요즘 사람이\n머리를 맞대고 정답을 입력하세요.</div>
+      <div class="sub">1980년대 유행어부터 2026년 최신 밈까지,\n추억의 신조어 10문제 + 요즘 신조어 10문제!\n\n옛날 사람 🤝 요즘 사람이\n머리를 맞대고 정답을 외쳐보세요.</div>
       <button class="primary-btn" onclick="startQuiz()">시작하기</button>
     </div>`;
 }
 
 function startQuiz() {
-  state.idx = 0; state.score = 0; state.genScore = [0, 0];
+  state.idx = 0;
   renderQuestion();
 }
 
@@ -286,12 +256,8 @@ function renderQuestion() {
     </div>
     <div class="qnum">Q${n}.</div>
     <div class="qtext">${q.q}</div>
-    <form class="answer-form" onsubmit="submitAnswer(event)">
-      <input class="answer-input" id="answerInput" type="text" placeholder="정답 입력" autocomplete="off" autofocus>
-      <button class="submit-btn" id="submitBtn" type="submit">제출</button>
-    </form>
+    <button class="reveal-btn" id="revealBtn" onclick="reveal()">정답 보기</button>
     <button class="hint-btn" id="hintBtn" onclick="showHint()">초성 힌트 보기</button>
-    <button class="giveup-btn" id="giveupBtn" onclick="giveUp()">모르겠어요, 정답 공개 🏳️</button>
     <div class="hint-box" id="hintBox"></div>
     <div class="verdict" id="verdict"></div>
     <div class="explain" id="explain"></div>
@@ -299,7 +265,6 @@ function renderQuestion() {
 
   requestAnimationFrame(() => {
     document.querySelector(".progress-bar").style.width = `${n / QUESTIONS.length * 100}%`;
-    document.getElementById("answerInput").focus();
   });
   window.scrollTo(0, 0);
 }
@@ -310,46 +275,13 @@ function showHint() {
   document.getElementById("hintBtn").style.display = "none";
 }
 
-function submitAnswer(e) {
-  e.preventDefault();
+function reveal() {
   const q = QUESTIONS[state.idx];
-  const input = document.getElementById("answerInput");
-  const guess = normalize(input.value);
-  if (!guess) return;
-
-  const correct = q.answers.some(a => normalize(a) === guess);
-  if (!correct) {
-    const verdict = document.getElementById("verdict");
-    verdict.className = "verdict no";
-    verdict.textContent = "❌ 오답! 다시 시도해보세요";
-    verdict.style.display = "block";
-    document.getElementById("giveupBtn").style.display = "block";
-    input.value = "";
-    input.classList.remove("shake");
-    requestAnimationFrame(() => input.classList.add("shake"));
-    input.focus();
-    return;
-  }
-
-  state.score++; state.genScore[q.gen]++;
-  finishQuestion("⭕ 정답!", "ok");
-}
-
-function giveUp() {
-  const q = QUESTIONS[state.idx];
-  finishQuestion(`🏳️ 정답은 <span class="ans">${q.answers[0]}</span>`, "no");
-}
-
-function finishQuestion(verdictHtml, cls) {
-  const q = QUESTIONS[state.idx];
-  document.getElementById("answerInput").disabled = true;
-  document.getElementById("submitBtn").disabled = true;
+  document.getElementById("revealBtn").style.display = "none";
   document.getElementById("hintBtn").style.display = "none";
-  document.getElementById("giveupBtn").style.display = "none";
 
   const verdict = document.getElementById("verdict");
-  verdict.className = `verdict ${cls}`;
-  verdict.innerHTML = verdictHtml;
+  verdict.innerHTML = `정답은 <span class="ans">${q.answers[0]}</span>`;
   verdict.style.display = "block";
 
   const ex = document.getElementById("explain");
@@ -369,26 +301,12 @@ function next() {
 }
 
 function renderResult() {
-  const s = state.score;
-  const grade =
-    s >= 16 ? ["🏆 세대통합 마스터", "80년대부터 2026년까지, 당신들은 살아있는 국어사전!"] :
-    s >= 11 ? ["😎 환상의 짝꿍", "어느 세대와 대화해도 막힘이 없는 콤비!"] :
-    s >= 6  ? ["🙂 평범한 현대인 콤비", "내 세대는 확실하게, 상대 세대는 어렴풋이!"] :
-              ["🐣 신조어 새싹들", "괜찮아요, 주관식은 원래 어려워요. 다시 도전!"];
-
   app.innerHTML = `
     <div class="center-screen">
       <div class="big-emoji">🎉</div>
-      <h1>결과 발표</h1>
-      <div class="score-big">${s} / ${QUESTIONS.length}</div>
-      <div class="grade">${grade[0]}</div>
-      <div class="sub">${grade[1]}</div>
-      <div class="gen-breakdown">
-        <div class="row"><span>🕰️ 추억의 신조어 (80~00년대)</span><b>${state.genScore[0]} / 10</b></div>
-        <div class="row"><span>⚡ 요즘 신조어 (최신 밈)</span><b>${state.genScore[1]} / 10</b></div>
-        <div class="hint">추억 점수가 높으면 요즘 파트너 덕, 요즘 점수가 높으면 옛날 파트너 덕! 서로에게 고마워하세요 🤝</div>
-      </div>
-      <button class="primary-btn" onclick="startQuiz()">다시 도전!</button>
+      <h1>수고하셨습니다!</h1>
+      <div class="sub">1980년대부터 2026년까지,\n${QUESTIONS.length}개의 신조어를 모두 만나봤어요.\n옛날 사람 🤝 요즘 사람, 서로에게 고마워하세요!</div>
+      <button class="primary-btn" onclick="startQuiz()">다시 하기</button>
     </div>`;
 }
 
