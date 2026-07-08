@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>세대공감 신조어 퀴즈 — 1980s ~ NOW</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Pretendard", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    background: #f7f9fc;
+    color: #222;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+  }
+  .app { width: 100%; max-width: 560px; padding: 28px 20px 60px; }
+
+  .counter { text-align: right; color: #b0b8c4; font-size: 15px; margin-bottom: 10px; }
+  .progress { height: 14px; background: #e8ecf2; border-radius: 999px; overflow: hidden; margin-bottom: 24px; }
+  .progress-bar { height: 100%; background: #2f7cf6; border-radius: 999px; width: 0; transition: width .35s ease; }
+
+  .gen-badge {
+    display: block; width: fit-content; margin: 0 auto 18px;
+    font-weight: 800; font-size: 14px; padding: 7px 18px; border-radius: 999px;
+  }
+  .gen-badge.old { background: #fff1dc; color: #c47b1d; }
+  .gen-badge.new { background: #e6efff; color: #2f7cf6; }
+
+  .hero {
+    width: 100%; border-radius: 18px; overflow: hidden;
+    background: #fff; box-shadow: 0 4px 20px rgba(30,60,120,.08);
+    margin-bottom: 26px;
+  }
+  .hero img { width: 100%; display: block; max-height: 360px; object-fit: contain; background:#fff; }
+  .hero .emoji-card {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 220px; gap: 10px;
+  }
+  .hero .emoji-card .e { font-size: 72px; }
+  .hero .emoji-card .t { font-size: 14px; color: #9aa4b2; letter-spacing: 2px; }
+
+  .qnum { text-align: center; color: #2f7cf6; font-size: 34px; font-weight: 800; margin-bottom: 18px; }
+  .qtext { text-align: center; font-size: 20px; font-weight: 700; line-height: 1.55; margin-bottom: 34px; white-space: pre-line; }
+
+  .choices { display: flex; flex-direction: column; gap: 16px; }
+  .choice {
+    width: 100%; border: none; cursor: pointer;
+    background: #2f7cf6; color: #fff;
+    font-size: 17px; font-weight: 700; font-family: inherit;
+    padding: 20px 16px; border-radius: 999px;
+    transition: transform .08s, background .15s;
+  }
+  .choice:hover { background: #1e66e0; transform: translateY(-1px); }
+  .choice:disabled { cursor: default; transform: none; }
+  .choice.correct { background: #17b26a !important; }
+  .choice.wrong { background: #ef4444 !important; }
+  .choice.dim { background: #cdd6e2 !important; }
+
+  .explain {
+    margin-top: 26px; background: #fff; border-radius: 14px;
+    padding: 18px 20px; font-size: 15px; line-height: 1.6; color: #444;
+    box-shadow: 0 4px 20px rgba(30,60,120,.08);
+    display: none;
+  }
+  .explain b { color: #2f7cf6; }
+  .next-btn {
+    margin-top: 18px; width: 100%; padding: 18px; border: none; border-radius: 999px;
+    background: #222; color: #fff; font-size: 17px; font-weight: 700; font-family: inherit;
+    cursor: pointer; display: none;
+  }
+
+  .center-screen { text-align: center; padding-top: 8vh; }
+  .center-screen .big-emoji { font-size: 84px; margin-bottom: 24px; }
+  .center-screen h1 { font-size: 30px; line-height: 1.4; margin-bottom: 14px; }
+  .center-screen .sub { color: #7a8494; font-size: 16px; line-height: 1.6; margin-bottom: 40px; white-space: pre-line; }
+  .primary-btn {
+    padding: 18px 60px; border: none; border-radius: 999px;
+    background: #2f7cf6; color: #fff; font-size: 18px; font-weight: 800; font-family: inherit; cursor: pointer;
+  }
+  .primary-btn:hover { background: #1e66e0; }
+
+  .score-big { font-size: 56px; font-weight: 800; color: #2f7cf6; margin: 10px 0 6px; }
+  .grade { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+  .gen-breakdown {
+    margin: 30px auto 40px; max-width: 380px; text-align: left;
+    background: #fff; border-radius: 14px; padding: 20px 24px;
+    box-shadow: 0 4px 20px rgba(30,60,120,.08);
+  }
+  .gen-breakdown .row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 16px; }
+  .gen-breakdown .row b { color: #2f7cf6; }
+  .gen-breakdown .hint { font-size: 13px; color: #9aa4b2; padding-top: 10px; border-top: 1px solid #eef1f6; margin-top: 8px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+// gen 0 = 추억의 신조어(1980s~2000s), gen 1 = 요즘 신조어(2010s~현재)
+const GEN_LABEL = ["🕰️ 추억의 신조어", "⚡ 요즘 신조어"];
+
+const QUESTIONS = [
+  {
+    gen: 0, tag: "1989", img: "q1.jpg", emoji: "👍🍊",
+    q: "1989년, 온 국민이 엄지를 치켜들게 만든\n유행어 \"따봉!\"을 탄생시킨 것은?",
+    choices: ["오렌지주스 TV 광고", "축구 국가대표 중계", "개그 프로그램 유행어", "브라질 영화 대사"],
+    answer: 0,
+    explain: "1989년 델몬트 오렌지주스 광고에서 브라질 농부들이 외친 <b>\"따봉!\"</b>(포르투갈어로 '좋다')이 전국적으로 유행했어요. 정작 사람들이 제품명은 기억 못해서 나중엔 '따봉 주스'가 따로 출시됐다는 웃픈 이야기가 있죠."
+  },
+  {
+    gen: 1, tag: "2024", img: "q20.jpg", emoji: "🍀👑",
+    q: "아이브 장원영의 '원영적 사고'에서 나온 말로,\n어떤 상황도 초긍정으로 바꿔버리는\n마법의 주문은?",
+    choices: ["완전 럭키비키잖아", "완전 해피뀨뀨잖아", "완전 조은생각이잖아", "완전 갓생살았잖아"],
+    answer: 0,
+    explain: "<b>럭키비키</b> — 빵이 눈앞에서 품절돼도 \"갓 나온 빵을 받게 됐으니 완전 럭키비키잖아🍀\"라고 생각하는 초긍정 마인드. 비키(Vicky)는 장원영의 영어 이름입니다."
+  },
+  {
+    gen: 0, tag: "1990s", img: "q6.jpg", emoji: "📟",
+    q: "삐삐 시절, 숫자 메시지\n'8282'의 뜻은?",
+    choices: ["빨리빨리", "바이바이", "발이 저려", "판이 엎어져"],
+    answer: 0,
+    explain: "<b>8282 = 빨리빨리</b>. 삐삐엔 숫자만 보낼 수 있어서 1004(천사), 7942(친구사이), 1010235(열렬히 사모해) 같은 숫자 암호가 발달했죠."
+  },
+  {
+    gen: 1, tag: "2026", img: "yeongkk.jpg", emoji: "🎤✨",
+    q: "\"너 완전 영크크다!\"\n2026년 최신 밈, '영크크'의 뜻은?",
+    choices: ["젊고 트렌디한 감각을 지닌 사람", "영어를 크게 크게 말하는 사람", "영혼 없이 크크 웃는 사람", "영업을 크게 성공시킨 사람"],
+    answer: 0,
+    explain: "<b>영크크</b> — 보이그룹 코르티스(CORTIS)의 곡 'YOUNG CREATOR CREW' 앞글자를 딴 말로, 젊고 트렌디한 감각의 소유자라는 뜻. 반대말은 <b>늙크크</b>(젊은 문화 코드를 모르는 사람)입니다. 이 문제를 틀렸다면... 늙크크?"
+  },
+  {
+    gen: 0, tag: "2000s", img: "q11.jpg", emoji: "🖐️😑",
+    q: "2000년대 초 온라인 게임에서 퍼진 말로,\n상대를 무시하며 대화를 끝낼 때 쓰던\n단 한 글자는?",
+    choices: ["즐", "헐", "캐", "뷁"],
+    answer: 0,
+    explain: "<b>즐</b> — 게임 '리니지'에서 \"즐거운 시간 되세요\"로 거절을 대신하던 것에서 유래. \"즐~\" 한 글자면 대화 종료였죠. '뷁'은 문희준 관련 밈으로 쓰인 감탄사."
+  },
+  {
+    gen: 1, tag: "2018", img: "q16.jpg", emoji: "🥶💬",
+    q: "'갑분싸'의 뜻은?",
+    choices: ["갑자기 분위기 싸해짐", "갑부는 분명 싸가지없다", "갑옷 입은 분식집 싸장님", "갑자기 분노가 싹튼다"],
+    answer: 0,
+    explain: "<b>갑분싸 = 갑자기 분위기 싸해짐</b>. 2018년경 대유행. 응용형으로 '갑분딱'(갑자기 분위기 딱딱) 등 무한 변형이 가능합니다."
+  },
+  {
+    gen: 0, tag: "1987", img: "q2.jpg", emoji: "🤪",
+    q: "\"영구 없~다!\"\n전 국민을 웃긴 이 유행어의 주인공 개그맨은?",
+    choices: ["심형래", "이주일", "임하룡", "김병조"],
+    answer: 0,
+    explain: "1987년 KBS '유머 1번지'에서 <b>심형래</b>가 연기한 바보 캐릭터 '영구'의 유행어. 문을 빼꼼 열고 \"영구 없~다\"를 외치면 온 가족이 웃던 시절이었습니다."
+  },
+  {
+    gen: 1, tag: "2025", img: "chugumi.jpg", emoji: "💅🎨",
+    q: "\"요즘 내 추구미는 시티보이룩이야\"\n여기서 '추구미'란?",
+    choices: ["추구하는 미(美)·이미지", "추억을 구성하는 미소", "추리닝에 구제 미시룩", "추가로 구매한 미술품"],
+    answer: 0,
+    explain: "<b>추구미 = 내가 추구하는 미(美)</b>, 즉 지향하는 스타일·이미지. \"추구미와 현실 사이의 괴리\" 같은 식으로 패션·인테리어·인생 계획까지 두루 쓰입니다."
+  },
+  {
+    gen: 0, tag: "1995", img: "q10.jpg", emoji: "⏳📺",
+    q: "1995년, 방영 시간만 되면 거리가 한산해져\n'귀가시계'라고 불린 전설의 드라마는?",
+    choices: ["모래시계", "여명의 눈동자", "첫사랑", "질투"],
+    answer: 0,
+    explain: "<b>모래시계</b> — 최고 시청률 64.5%. \"나 떨고 있니?\" 같은 명대사와 함께, 본방 시간엔 다들 집에 간다고 해서 '귀가시계'라는 신조어까지 만들었습니다."
+  },
+  {
+    gen: 1, tag: "2022", img: "q18.jpg", emoji: "💪🔥",
+    q: "e스포츠 인터뷰에서 시작돼\n2022 카타르 월드컵에서 대한민국을 울린\n'중꺾마'의 뜻은?",
+    choices: ["중요한 건 꺾이지 않는 마음", "중간에 꺾여도 마무리는 완벽히", "중년의 꺾인 마음", "중요한 순간 꺾는 마법"],
+    answer: 0,
+    explain: "<b>중꺾마 = 중요한 건 꺾이지 않는 마음</b>. LoL 프로게이머 '데프트' 인터뷰 기사 제목에서 시작, 롤드컵 우승과 월드컵 16강 신화를 거치며 국민 유행어가 됐습니다."
+  },
+  {
+    gen: 0, tag: "2000s", img: "q12.jpg", emoji: "😢👀",
+    q: "'안습'의 원래 뜻은?",
+    choices: ["안구에 습기 차다", "안쓰럽고 습하다", "안 되는 습관", "안면에 습진"],
+    answer: 0,
+    explain: "<b>안습 = 안구에 습기 차다</b>, 즉 눈물이 난다는 뜻. 짠하거나 민망한 상황에 두루 쓰인 2000년대 대표 신조어입니다."
+  },
+  {
+    gen: 1, tag: "2025", img: "neujoh.jpg", emoji: "🌇👌",
+    q: "감성 사진 밑에 달리는 댓글\n\"와 느좋...\"의 뜻은?",
+    choices: ["느낌 좋다", "느긋해서 좋다", "느그 집 좋다", "느끼한데 좋다"],
+    answer: 0,
+    explain: "<b>느좋 = 느낌 좋다</b>. 분위기·무드·조합이 마음에 들 때 쓰는 만능 칭찬어. \"느좋 카페\", \"느좋 플레이리스트\"처럼 씁니다."
+  },
+  {
+    gen: 0, tag: "1980s", img: "q5.jpg", emoji: "📺🔔",
+    q: "밤 9시 시보가 '땡' 치자마자\n대통령 소식부터 나온다고 해서 붙은\n1980년대 뉴스의 별명은?",
+    choices: ["땡전뉴스", "각하타임", "나인뉴스", "종박뉴스"],
+    answer: 0,
+    explain: "<b>땡전뉴스</b> — '땡' 하면 \"전두환 대통령은 오늘...\"로 시작한다고 해서 붙은 별명. 당시 언론 통제를 풍자한 대표적 신조어입니다."
+  },
+  {
+    gen: 1, tag: "2020s", img: "q17.jpg", emoji: "🧊☕",
+    q: "한겨울 칼바람에도 손에서\n아이스 아메리카노를 놓지 않는 사람들,\n'얼죽아'의 뜻은?",
+    choices: ["얼어 죽어도 아이스 아메리카노", "얼굴이 죽여주는 아저씨", "얼렁뚱땅 죽 쑤는 아침", "얼음 죽순 아메리카노"],
+    answer: 0,
+    explain: "<b>얼죽아 = 얼어 죽어도 아이스 아메리카노</b>. 한국인의 아아 사랑을 상징하는 말로, 신조어 인지도 조사에서 '가장 유명한 신조어 1위'에 오르기도 했습니다."
+  },
+  {
+    gen: 0, tag: "1990s", img: "q7.jpg", emoji: "🚗😎",
+    q: "1990년대 초 압구정동에서\n고급 승용차를 세우고 \"야, 타!\"를 외치며\n헌팅하던 이들을 부른 말은?",
+    choices: ["야타족", "오렌지족", "낑깡족", "폭탄족"],
+    answer: 0,
+    explain: "<b>야타족</b> — 말 그대로 \"야, 타!\"에서 나온 말. 비슷한 시기 압구정 일대의 부유층 자제들은 '오렌지족', 오렌지족을 흉내내던 이들은 '낑깡족'이라 불렸습니다."
+  },
+  {
+    gen: 1, tag: "2025", img: "ssakssak.jpg", emoji: "🥬✂️",
+    q: "일이 원하는 대로 착착 풀렸을 때\nZ세대가 외치는 \"싹싹김치!\"\n어떤 뜻으로 쓰일까?",
+    choices: ["완전 만족스럽다는 기쁨의 감탄사", "밥그릇을 싹싹 비웠다는 뜻", "싹싹하게 사과한다는 뜻", "김장을 싹 끝냈다는 뜻"],
+    answer: 0,
+    explain: "<b>싹싹김치</b> — 기분 좋고 성취감 느낄 때 쓰는 긍정 추임새. 게임 방송(LoL 캐릭터 그웬의 가위질 '싹싹')에서 시작돼 SNS로 퍼졌고, '싹싹김치 뜻' 검색량이 한 달 새 120% 폭증하기도 했습니다."
+  },
+  {
+    gen: 0, tag: "2000s", img: "q14.jpg", emoji: "👩‍👦🏆",
+    q: "나보다 공부도 잘하고 취직도 잘한\n영원한 비교 대상, '엄친아'의 뜻은?",
+    choices: ["엄마 친구 아들", "엄청 친근한 아이", "엄격한 집안의 친화력 있는 아이", "엄마가 친 아이 성적"],
+    answer: 0,
+    explain: "<b>엄친아 = 엄마 친구 아들</b>. \"엄마 친구 아들은 이번에 대기업 갔다더라...\" 모든 것을 다 잘하는 가상의 존재로, '엄친딸'과 세트."
+  },
+  {
+    gen: 1, tag: "2020s", img: "q19.jpg", emoji: "😎✨",
+    q: "\"보고서는 '알잘딱깔센'으로 부탁해요\"\n이 말의 뜻은?",
+    choices: ["알아서 잘 딱 깔끔하고 센스있게", "알바생 잘하면 딱 깔아주는 센스", "알고 보면 잘난 딱딱하고 깔끔한 센터", "알람 잘 맞추고 딱 깔끔하게 세수"],
+    answer: 0,
+    explain: "<b>알잘딱깔센 = 알아서 잘 딱 깔끔하고 센스있게</b>. 스트리머 방송에서 유래해 직장·일상 어디서나 쓰이는 만능 요청 표현이 됐습니다."
+  },
+  {
+    gen: 0, tag: "1990s", img: "q9.jpg", emoji: "⚡💻",
+    q: "PC통신 채팅에서\n\"오늘 번개 어때?\"라고 하면\n무슨 뜻이었을까?",
+    choices: ["즉석 오프라인 모임", "접속이 자꾸 끊김", "초고속 답장", "무료 접속 이벤트"],
+    answer: 0,
+    explain: "<b>번개 = 즉석 오프라인 만남</b>. 하이텔·천리안·나우누리 시절, '정모'(정기모임)와 함께 채팅방을 달구던 말입니다. 방가, 하이루, 강추도 다 이 시절 출신."
+  },
+  {
+    gen: 1, tag: "2020s", img: "iwaejin.jpg", emoji: "😲❗",
+    q: "믿기 힘든 일이 실제로 벌어졌을 때 쓰는\n'이왜진'의 뜻은?",
+    choices: ["이게 왜 진짜?", "이건 왜 진행이 안 돼?", "이 정도면 왜구 진출", "이번엔 왜 진 거야?"],
+    answer: 0,
+    explain: "<b>이왜진 = 이게 왜 진짜?</b> 농담인 줄 알았던 게 사실로 밝혀졌을 때의 충격을 담은 말. \"이왜진ㅋㅋ\" 한마디면 놀라움 표현 끝."
+  },
+];
+
+const state = { idx: -1, score: 0, genScore: [0, 0], shuffled: [] };
+
+function shuffleChoices(q) {
+  const order = q.choices.map((_, i) => i).sort(() => Math.random() - 0.5);
+  return { order, answerPos: order.indexOf(q.answer) };
+}
+
+const app = document.getElementById("app");
+
+function renderStart() {
+  app.innerHTML = `
+    <div class="center-screen">
+      <div class="big-emoji">🧓🤝🧑</div>
+      <h1>세대공감 신조어 퀴즈</h1>
+      <div class="sub">1980년대 유행어부터 2026년 최신 밈까지,\n추억의 신조어 10문제 + 요즘 신조어 10문제!\n\n옛날 사람 🤝 요즘 사람이 짝을 이뤄\n서로의 시대를 얼마나 아는지 확인해보세요.</div>
+      <button class="primary-btn" onclick="startQuiz()">시작하기</button>
+    </div>`;
+}
+
+function startQuiz() {
+  state.idx = 0; state.score = 0; state.genScore = [0, 0];
+  state.shuffled = QUESTIONS.map(shuffleChoices);
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[state.idx];
+  const sh = state.shuffled[state.idx];
+  const n = state.idx + 1;
+
+  app.innerHTML = `
+    <div class="counter">${n}/${QUESTIONS.length}</div>
+    <div class="progress"><div class="progress-bar" style="width:${(n - 1) / QUESTIONS.length * 100}%"></div></div>
+    <span class="gen-badge ${q.gen === 0 ? "old" : "new"}">${GEN_LABEL[q.gen]} · ${q.tag}</span>
+    <div class="hero">
+      <img src="img/${q.img}" alt="" onerror="this.outerHTML='<div class=&quot;emoji-card&quot;><div class=&quot;e&quot;>${q.emoji}</div><div class=&quot;t&quot;>${q.tag}</div></div>'">
+    </div>
+    <div class="qnum">Q${n}.</div>
+    <div class="qtext">${q.q}</div>
+    <div class="choices">
+      ${sh.order.map((orig, pos) =>
+        `<button class="choice" onclick="pick(${pos})">${q.choices[orig]}</button>`).join("")}
+    </div>
+    <div class="explain" id="explain"></div>
+    <button class="next-btn" id="nextBtn" onclick="next()">다음 문제 →</button>`;
+
+  requestAnimationFrame(() => {
+    document.querySelector(".progress-bar").style.width = `${n / QUESTIONS.length * 100}%`;
+  });
+  window.scrollTo(0, 0);
+}
+
+function pick(pos) {
+  const q = QUESTIONS[state.idx];
+  const sh = state.shuffled[state.idx];
+  const btns = document.querySelectorAll(".choice");
+  btns.forEach(b => b.disabled = true);
+
+  const correct = pos === sh.answerPos;
+  if (correct) { state.score++; state.genScore[q.gen]++; }
+
+  btns.forEach((b, i) => {
+    if (i === sh.answerPos) b.classList.add("correct");
+    else if (i === pos) b.classList.add("wrong");
+    else b.classList.add("dim");
+  });
+
+  const ex = document.getElementById("explain");
+  ex.innerHTML = `${correct ? "⭕ <b>정답!</b>" : "❌ <b>아쉽!</b>"} &nbsp;${q.explain}`;
+  ex.style.display = "block";
+  const nextBtn = document.getElementById("nextBtn");
+  nextBtn.textContent = state.idx === QUESTIONS.length - 1 ? "결과 보기 🎉" : "다음 문제 →";
+  nextBtn.style.display = "block";
+  nextBtn.scrollIntoView({ behavior: "smooth", block: "end" });
+}
+
+function next() {
+  state.idx++;
+  if (state.idx >= QUESTIONS.length) return renderResult();
+  renderQuestion();
+}
+
+function renderResult() {
+  const s = state.score;
+  const grade =
+    s >= 18 ? ["🏆 세대통합 마스터", "80년대부터 2026년까지, 당신들은 살아있는 국어사전!"] :
+    s >= 14 ? ["😎 환상의 짝꿍", "어느 세대와 대화해도 막힘이 없는 콤비!"] :
+    s >= 9  ? ["🙂 평범한 현대인 콤비", "내 세대는 확실하게, 상대 세대는 어렴풋이!"] :
+              ["🐣 신조어 새싹들", "괜찮아요, 오늘부터 배우면 완전 럭키비키잖아🍀"];
+
+  app.innerHTML = `
+    <div class="center-screen">
+      <div class="big-emoji">🎉</div>
+      <h1>결과 발표</h1>
+      <div class="score-big">${s} / ${QUESTIONS.length}</div>
+      <div class="grade">${grade[0]}</div>
+      <div class="sub">${grade[1]}</div>
+      <div class="gen-breakdown">
+        <div class="row"><span>🕰️ 추억의 신조어 (80~00년대)</span><b>${state.genScore[0]} / 10</b></div>
+        <div class="row"><span>⚡ 요즘 신조어 (10년대~현재)</span><b>${state.genScore[1]} / 10</b></div>
+        <div class="hint">추억 점수가 높으면 요즘 파트너 덕, 요즘 점수가 높으면 옛날 파트너 덕! 서로에게 고마워하세요 🤝</div>
+      </div>
+      <button class="primary-btn" onclick="startQuiz()">다시 도전!</button>
+    </div>`;
+}
+
+renderStart();
+</script>
+</body>
+</html>
