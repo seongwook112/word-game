@@ -73,7 +73,11 @@
     cursor: pointer; display: none;
   }
 
-  .teaser { text-align: center; padding-top: 22vh; }
+  .teaser { text-align: center; padding-top: 22vh; min-height: 70vh; cursor: pointer; }
+  .teaser .tap {
+    margin-top: 40px; color: #9aa4b2; font-size: 15px; font-weight: 700;
+    animation: pop .5s .8s ease both;
+  }
   .teaser .gen-badge { animation: pop .5s ease both; }
   .teaser .year {
     font-size: 88px; font-weight: 800; color: #2f7cf6; letter-spacing: 2px;
@@ -257,12 +261,12 @@ function startQuiz() {
 function renderTeaser() {
   const q = QUESTIONS[state.idx];
   app.innerHTML = `
-    <div class="teaser">
+    <div class="teaser" onclick="renderQuestion()">
       <span class="gen-badge ${q.gen === 0 ? "old" : "new"}">${GEN_LABEL[q.gen]}</span>
       <div class="year">${q.tag}</div>
+      <div class="tap">화면을 눌러 문제 보기</div>
     </div>`;
   window.scrollTo(0, 0);
-  setTimeout(renderQuestion, 2000);
 }
 
 function renderQuestion() {
