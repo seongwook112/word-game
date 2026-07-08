@@ -37,6 +37,7 @@
     height: 180px; gap: 10px;
   }
   .hero .emoji-card .e { font-size: 64px; }
+  .hero .emoji-card img { height: 130px; border-radius: 10px; object-fit: contain; }
   .hero .emoji-card .t { font-size: 14px; color: #9aa4b2; letter-spacing: 2px; }
 
   .qnum { text-align: center; color: #2f7cf6; font-size: 34px; font-weight: 800; margin-bottom: 18px; }
@@ -121,9 +122,9 @@ const QUESTIONS = [
     explain: "<b>영크크</b> — 'YOUNG CREATOR CREW' 앞글자를 딴 말. 반대말은 <b>늙크크</b>(젊은 문화 코드를 모르는 사람). 이 문제를 틀렸다면... 늙크크?"
   },
   {
-    gen: 0, tag: "1990s", img: "q6.jpg", emoji: "📟",
-    q: "삐삐로 '열렬히 사모해'라는\n고백을 전하고 싶을 때\n찍어 보낸 일곱 자리 숫자는?",
-    answers: ["1010235"],
+    gen: 0, tag: "1990s", img: "q6.jpg", emoji: "📟", qimg: "bbibbi.jpg",
+    q: "삐삐에 찍힌 숫자 '1010235'.\n이 일곱 자리에 담긴 뜻은?",
+    answers: ["열렬히 사모해", "열렬히사모해", "열렬히 사모"],
     explain: "<b>1010235 = 열렬히 사모해</b>. 삐삐엔 숫자만 보낼 수 있어서 8282(빨리빨리), 1004(천사), 7942(친구사이) 같은 숫자 암호가 발달했죠."
   },
   {
@@ -278,7 +279,7 @@ function renderQuestion() {
     <div class="progress"><div class="progress-bar" style="width:${(n - 1) / QUESTIONS.length * 100}%"></div></div>
     <span class="gen-badge ${q.gen === 0 ? "old" : "new"}">${GEN_LABEL[q.gen]} · ${q.tag}</span>
     <div class="hero">
-      <div class="emoji-card"><div class="e">${q.emoji}</div><div class="t">${q.tag}</div></div>
+      <div class="emoji-card">${q.qimg ? `<img src="img/${q.qimg}" alt="">` : `<div class="e">${q.emoji}</div>`}<div class="t">${q.tag}</div></div>
     </div>
     <div class="qnum">Q${n}.</div>
     <div class="qtext">${q.q}</div>
